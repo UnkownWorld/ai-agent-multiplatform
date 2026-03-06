@@ -1,51 +1,51 @@
-# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+# Dependencies
+node_modules/
+bun.lock
 
-# dependencies
-node_modules
-/.pnp
-.pnp.*
-.yarn/*
-!.yarn/patches
-!.yarn/plugins
-!.yarn/releases
-!.yarn/versions
+# Build outputs
+.next/
+out/
+dist/
+build/
 
-# testing
-/coverage
+# Desktop
+desktop/src-tauri/target/
 
-# next.js
-/.next/
-/out/
+# Mobile
+mobile/node_modules/
+mobile/.expo/
+mobile/dist/
 
-# production
-/build
+# Environment
+.env
+.env.local
+.env.*.local
 
-# misc
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
 .DS_Store
-*.pem
+Thumbs.db
 
-# debug
+# Logs
+*.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-.pnpm-debug.log*
 
-# env files (can opt-in for committing if needed)
-.env*
+# Test
+coverage/
 
-# vercel
-.vercel
-
-# typescript
+# Misc
 *.tsbuildinfo
 next-env.d.ts
-local-*
-.claude
-.z-ai-config
-dev.log
-test
-prompt
 
-server.log
-# Skills directory
-/skills/
+# Temp files
+*.json.bak
+chatbox*.json
+react-native-ai.json
+generate-*.js
