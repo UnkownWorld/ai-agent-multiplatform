@@ -1,6 +1,6 @@
 /**
  * Agent React Hooks
- * Agent的React Hook封装
+ * Agent的React Hook封装 - 修复重复初始化问题
  */
 
 'use client';
@@ -16,6 +16,10 @@ import {
   createPlatformAdapter,
   defaultAgentConfig,
 } from '../index';
+
+// 全局Agent实例缓存，防止重复创建
+let agentInstance: AgentCore | null = null;
+let initPromise: Promise<AgentCore> | null = null;
 
 /**
  * useAgent - 主Agent Hook
@@ -33,53 +37,101 @@ export function useAgent(config?: Partial<AgentConfig>) {
   });
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const initializedRef = useRef(false);
 
   // 初始化Agent
   useEffect(() => {
+    // 防止重复初始化
+    if (initializedRef.current) return;
+    initializedRef.current = true;
+
+    let mounted = true;
+
     async function initAgent() {
       try {
+        // 如果已有实例，直接使用
+        if (agentInstance) {
+          if (mounted) {
+            setAgent(agentInstance);
+            setState(agentInstance.getState());
+            setIsLoading(false);
+          }
+          return;
+        }
+
+        // 如果正在初始化，等待完成
+        if (initPromise) {
+          const instance = await initPromise;
+          if (mounted) {
+            setAgent(instance);
+            setState(instance.getState());
+            setIsLoading(false);
+          }
+          return;
+        }
+
         setIsLoading(true);
-        const platform = await createPlatformAdapter();
-        const agentConfig: AgentConfig = {
-          ...defaultAgentConfig,
-          ...config,
-        };
-        const agentInstance = new AgentCore(agentConfig, platform);
         
-        // 加载历史会话
-        await agentInstance.loadAllConversations();
+        // 开始初始化
+        initPromise = (async () => {
+          const platform = await createPlatformAdapter();
+          const agentConfig: AgentConfig = {
+            ...defaultAgentConfig,
+            ...config,
+          };
+          const instance = new AgentCore(agentConfig, platform);
+          
+          // 加载历史会话
+          await instance.loadAllConversations();
+          
+          return instance;
+        })();
+
+        const instance = await initPromise;
+        agentInstance = instance;
         
-        // 订阅状态变化
-        agentInstance.on('status:changed', () => {
-          setState(agentInstance.getState());
-        });
-        
-        agentInstance.on('message:created', () => {
-          setState(agentInstance.getState());
-        });
-        
-        agentInstance.on('conversation:created', () => {
-          setState(agentInstance.getState());
-        });
-        
-        agentInstance.on('conversation:updated', () => {
-          setState(agentInstance.getState());
-        });
-        
-        agentInstance.on('error', (event) => {
-          setError((event.payload as { error: string }).error);
-        });
-        
-        setAgent(agentInstance);
-        setState(agentInstance.getState());
+        if (mounted) {
+          // 订阅状态变化
+          instance.on('status:changed', () => {
+            setState(instance.getState());
+          });
+          
+          instance.on('message:created', () => {
+            setState(instance.getState());
+          });
+          
+          instance.on('conversation:created', () => {
+            setState(instance.getState());
+          });
+          
+          instance.on('conversation:updated', () => {
+            setState(instance.getState());
+          });
+          
+          instance.on('error', (event) => {
+            setError((event.payload as { error: string }).error);
+          });
+          
+          setAgent(instance);
+          setState(instance.getState());
+        }
       } catch (err) {
-        setError(err instanceof Error ? err.message : '初始化失败');
+        if (mounted) {
+          setError(err instanceof Error ? err.message : '初始化失败');
+        }
       } finally {
-        setIsLoading(false);
+        if (mounted) {
+          setIsLoading(false);
+        }
       }
     }
     
     initAgent();
+
+    // 清理函数
+    return () => {
+      mounted = false;
+    };
   }, []);
 
   // 发送消息

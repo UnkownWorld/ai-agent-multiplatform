@@ -11,6 +11,11 @@ import {
   FileSystemAdapter,
 } from '../core/types';
 
+// ============ 安全检查 ============
+
+const isBrowser = typeof window !== 'undefined';
+const isServer = !isBrowser;
+
 // ============ Web平台适配器 ============
 
 class WebStorageAdapter implements StorageAdapter {
@@ -21,6 +26,7 @@ class WebStorageAdapter implements StorageAdapter {
   }
 
   async get<T>(key: string): Promise<T | null> {
+    if (isServer) return null;
     try {
       const item = localStorage.getItem(this.prefix + key);
       return item ? JSON.parse(item) : null;
@@ -30,6 +36,7 @@ class WebStorageAdapter implements StorageAdapter {
   }
 
   async set<T>(key: string, value: T): Promise<void> {
+    if (isServer) return;
     try {
       localStorage.setItem(this.prefix + key, JSON.stringify(value));
     } catch (error) {
@@ -38,6 +45,7 @@ class WebStorageAdapter implements StorageAdapter {
   }
 
   async remove(key: string): Promise<void> {
+    if (isServer) return;
     try {
       localStorage.removeItem(this.prefix + key);
     } catch (error) {
@@ -46,6 +54,7 @@ class WebStorageAdapter implements StorageAdapter {
   }
 
   async clear(): Promise<void> {
+    if (isServer) return;
     try {
       const keys = Object.keys(localStorage).filter(k => k.startsWith(this.prefix));
       keys.forEach(k => localStorage.removeItem(k));
@@ -57,6 +66,7 @@ class WebStorageAdapter implements StorageAdapter {
 
 class WebClipboardAdapter implements ClipboardAdapter {
   async read(): Promise<string> {
+    if (isServer) return '';
     try {
       return await navigator.clipboard.readText();
     } catch {
@@ -65,29 +75,39 @@ class WebClipboardAdapter implements ClipboardAdapter {
   }
 
   async write(text: string): Promise<void> {
+    if (isServer) return;
     try {
       await navigator.clipboard.writeText(text);
-    } catch (error) {
+    } catch {
       // 降级方案
-      const textarea = document.createElement('textarea');
-      textarea.value = text;
-      textarea.style.position = 'fixed';
-      textarea.style.opacity = '0';
-      document.body.appendChild(textarea);
-      textarea.select();
-      document.execCommand('copy');
-      document.body.removeChild(textarea);
+      try {
+        const textarea = document.createElement('textarea');
+        textarea.value = text;
+        textarea.style.position = 'fixed';
+        textarea.style.opacity = '0';
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textarea);
+      } catch (error) {
+        console.error('Clipboard write error:', error);
+      }
     }
   }
 }
 
 class WebNotificationAdapter implements NotificationAdapter {
   async show(title: string, body: string): Promise<void> {
-    if ('Notification' in window) {
-      const permission = await Notification.requestPermission();
-      if (permission === 'granted') {
-        new Notification(title, { body });
+    if (isServer) return;
+    try {
+      if ('Notification' in window) {
+        const permission = await Notification.requestPermission();
+        if (permission === 'granted') {
+          new Notification(title, { body });
+        }
       }
+    } catch (error) {
+      console.error('Notification error:', error);
     }
   }
 }
@@ -117,6 +137,8 @@ class TauriStorageAdapter implements StorageAdapter {
       return cached as T;
     }
 
+    if (isServer) return null;
+
     try {
       // Tauri文件存储
       const { readTextFile, BaseDirectory } = await import('@tauri-apps/api/fs');
@@ -134,6 +156,8 @@ class TauriStorageAdapter implements StorageAdapter {
   async set<T>(key: string, value: T): Promise<void> {
     this.cache.set(this.prefix + key, value);
     
+    if (isServer) return;
+    
     try {
       const { writeTextFile, BaseDirectory } = await import('@tauri-apps/api/fs');
       await writeTextFile(`${this.prefix}${key}.json`, JSON.stringify(value), {
@@ -146,6 +170,8 @@ class TauriStorageAdapter implements StorageAdapter {
 
   async remove(key: string): Promise<void> {
     this.cache.delete(this.prefix + key);
+    
+    if (isServer) return;
     
     try {
       const { removeFile, BaseDirectory } = await import('@tauri-apps/api/fs');
@@ -164,6 +190,7 @@ class TauriStorageAdapter implements StorageAdapter {
 
 class TauriClipboardAdapter implements ClipboardAdapter {
   async read(): Promise<string> {
+    if (isServer) return '';
     try {
       const { readText } = await import('@tauri-apps/api/clipboard');
       return await readText();
@@ -173,6 +200,7 @@ class TauriClipboardAdapter implements ClipboardAdapter {
   }
 
   async write(text: string): Promise<void> {
+    if (isServer) return;
     try {
       const { writeText } = await import('@tauri-apps/api/clipboard');
       await writeText(text);
@@ -184,6 +212,7 @@ class TauriClipboardAdapter implements ClipboardAdapter {
 
 class TauriNotificationAdapter implements NotificationAdapter {
   async show(title: string, body: string): Promise<void> {
+    if (isServer) return;
     try {
       const { sendNotification } = await import('@tauri-apps/api/notification');
       await sendNotification({ title, body });
@@ -195,16 +224,19 @@ class TauriNotificationAdapter implements NotificationAdapter {
 
 class TauriFileSystemAdapter implements FileSystemAdapter {
   async readFile(path: string): Promise<string> {
+    if (isServer) throw new Error('Not available on server');
     const { readTextFile } = await import('@tauri-apps/api/fs');
     return await readTextFile(path);
   }
 
   async writeFile(path: string, content: string): Promise<void> {
+    if (isServer) throw new Error('Not available on server');
     const { writeTextFile } = await import('@tauri-apps/api/fs');
     await writeTextFile(path, content);
   }
 
   async pickFile(): Promise<string | null> {
+    if (isServer) return null;
     try {
       const { open } = await import('@tauri-apps/api/dialog');
       const selected = await open({
@@ -217,6 +249,7 @@ class TauriFileSystemAdapter implements FileSystemAdapter {
   }
 
   async pickDirectory(): Promise<string | null> {
+    if (isServer) return null;
     try {
       const { open } = await import('@tauri-apps/api/dialog');
       const selected = await open({
@@ -231,7 +264,7 @@ class TauriFileSystemAdapter implements FileSystemAdapter {
 
 export async function createDesktopAdapter(): Promise<PlatformAdapter> {
   // 检查是否在Tauri环境中
-  if (typeof window !== 'undefined' && window.__TAURI__) {
+  if (isBrowser && window.__TAURI__) {
     return {
       platform: 'desktop',
       storage: new TauriStorageAdapter(),
@@ -255,6 +288,7 @@ class ReactNativeStorageAdapter implements StorageAdapter {
   }
 
   async get<T>(key: string): Promise<T | null> {
+    if (isServer) return null;
     try {
       // @ts-ignore - React Native AsyncStorage
       const AsyncStorage = window.AsyncStorage;
@@ -269,6 +303,7 @@ class ReactNativeStorageAdapter implements StorageAdapter {
   }
 
   async set<T>(key: string, value: T): Promise<void> {
+    if (isServer) return;
     try {
       // @ts-ignore - React Native AsyncStorage
       const AsyncStorage = window.AsyncStorage;
@@ -281,6 +316,7 @@ class ReactNativeStorageAdapter implements StorageAdapter {
   }
 
   async remove(key: string): Promise<void> {
+    if (isServer) return;
     try {
       // @ts-ignore - React Native AsyncStorage
       const AsyncStorage = window.AsyncStorage;
@@ -293,6 +329,7 @@ class ReactNativeStorageAdapter implements StorageAdapter {
   }
 
   async clear(): Promise<void> {
+    if (isServer) return;
     try {
       // @ts-ignore - React Native AsyncStorage
       const AsyncStorage = window.AsyncStorage;
@@ -309,6 +346,7 @@ class ReactNativeStorageAdapter implements StorageAdapter {
 
 class ReactNativeClipboardAdapter implements ClipboardAdapter {
   async read(): Promise<string> {
+    if (isServer) return '';
     try {
       // @ts-ignore - React Native Clipboard
       const Clipboard = window.Clipboard;
@@ -322,6 +360,7 @@ class ReactNativeClipboardAdapter implements ClipboardAdapter {
   }
 
   async write(text: string): Promise<void> {
+    if (isServer) return;
     try {
       // @ts-ignore - React Native Clipboard
       const Clipboard = window.Clipboard;
@@ -336,6 +375,7 @@ class ReactNativeClipboardAdapter implements ClipboardAdapter {
 
 class ReactNativeNotificationAdapter implements NotificationAdapter {
   async show(title: string, body: string): Promise<void> {
+    if (isServer) return;
     try {
       // @ts-ignore - React Native PushNotification
       const PushNotification = window.PushNotification;
@@ -363,8 +403,8 @@ export function createMobileAdapter(): PlatformAdapter {
 // ============ 自动检测并创建适配器 ============
 
 export async function createPlatformAdapter(): Promise<PlatformAdapter> {
-  if (typeof window === 'undefined') {
-    // 服务端环境
+  if (isServer) {
+    // 服务端环境 - 返回空实现
     return createWebAdapter();
   }
 

@@ -14,12 +14,45 @@ import { ToolRegistry } from '../tools/registry';
 import { generateId } from '../utils';
 
 /**
+ * 安全的存储操作
+ */
+const safeStorage = {
+  get(key: string): string | null {
+    if (typeof window === 'undefined') return null;
+    try {
+      return localStorage.getItem(key);
+    } catch {
+      return null;
+    }
+  },
+  
+  set(key: string, value: string): void {
+    if (typeof window === 'undefined') return;
+    try {
+      localStorage.setItem(key, value);
+    } catch (error) {
+      console.error('Storage set error:', error);
+    }
+  },
+  
+  remove(key: string): void {
+    if (typeof window === 'undefined') return;
+    try {
+      localStorage.removeItem(key);
+    } catch (error) {
+      console.error('Storage remove error:', error);
+    }
+  },
+};
+
+/**
  * 组件加载器
  */
 export class ComponentLoader {
   private components: Map<string, InstalledComponent> = new Map();
   private toolRegistry: ToolRegistry;
   private storageKey = 'skill_components';
+  private initialized = false;
 
   constructor(toolRegistry: ToolRegistry) {
     this.toolRegistry = toolRegistry;
@@ -99,7 +132,7 @@ export class ComponentLoader {
   /**
    * 获取已安装组件
    */
-  getInstalled(componentId?: string): InstalledComponent | InstalledComponent[] {
+  getInstalled(componentId?: string): InstalledComponent | InstalledComponent[] | null {
     if (componentId) {
       return this.components.get(componentId) || null;
     }
@@ -110,9 +143,13 @@ export class ComponentLoader {
    * 加载所有已安装组件
    */
   async loadInstalled(): Promise<void> {
+    // 防止重复加载
+    if (this.initialized) return;
+    this.initialized = true;
+    
     try {
       // 从存储加载
-      const stored = localStorage.getItem(this.storageKey);
+      const stored = safeStorage.get(this.storageKey);
       if (stored) {
         const components: InstalledComponent[] = JSON.parse(stored);
         for (const installed of components) {
@@ -132,7 +169,7 @@ export class ComponentLoader {
    */
   private async saveComponents(): Promise<void> {
     const components = Array.from(this.components.values());
-    localStorage.setItem(this.storageKey, JSON.stringify(components));
+    safeStorage.set(this.storageKey, JSON.stringify(components));
   }
 
   // ============ 工具注册 ============
@@ -344,12 +381,6 @@ export class ComponentLoader {
   ): Promise<unknown> {
     const rendered = this.renderTemplate(config.template, args);
     
-    // 如果需要LLM渲染
-    if (config.useLLM) {
-      // 这里可以调用LLM来增强模板渲染
-      // 简化实现：直接返回渲染结果
-    }
-    
     return {
       format: config.outputFormat,
       content: rendered,
@@ -365,12 +396,13 @@ export class ComponentLoader {
   ): Promise<unknown> {
     if (config.language === 'javascript' || config.language === 'typescript') {
       // 创建安全的执行环境
+      const argKeys = Object.keys(args);
       const fn = new Function(
         'args',
         'env',
         `
         "use strict";
-        const { ${Object.keys(args).join(', ')} } = args;
+        const { ${argKeys.length > 0 ? argKeys.join(', ') : ''} } = args;
         ${config.code}
         `
       );
@@ -548,7 +580,11 @@ export class ComponentLoader {
     // 检查是否是环境变量引用
     if (auth.key.startsWith('$')) {
       const envVar = auth.key.slice(1);
-      return process.env[envVar] || '';
+      // 浏览器环境：从 window.__ENV__ 或直接返回空
+      if (typeof window !== 'undefined') {
+        return (window as unknown as Record<string, unknown>).__ENV__?.[envVar] || '';
+      }
+      return '';
     }
     
     return auth.key;
@@ -558,7 +594,6 @@ export class ComponentLoader {
    * 转换响应
    */
   private transformResponse(data: unknown, transform: string): unknown {
-    // 简化的转换实现
     try {
       const fn = new Function('data', `return ${transform}`);
       return fn(data);
