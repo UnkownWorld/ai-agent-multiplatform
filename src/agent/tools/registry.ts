@@ -1,6 +1,6 @@
 /**
- * Tool Registry - Complete with All Enhanced Tools
- * 工具注册表 - 包含所有增强工具
+ * Tool Registry - Complete with All Tools
+ * 工具注册表 - 包含所有工具
  */
 
 import { ToolDefinition, ToolExecutor } from '../core/types';
@@ -9,13 +9,15 @@ import { toolExecutors } from './executors';
 import { fileSystemTool, fileSystemExecutor } from './filesystem';
 import { codeExecutionTool, codeExecutionExecutor } from './sandbox';
 import { docxTool, docxExecutor } from './docx-enhanced';
+import { frontendDesignTool, frontendDesignExecutor } from './frontend-design';
 
 // 合并所有工具定义
 const completeTools: ToolDefinition[] = [
-  ...allTools.filter(t => t.name !== 'docx_processor'), // 移除旧的docx工具
+  ...allTools.filter(t => t.name !== 'docx_processor'),
   fileSystemTool,
   codeExecutionTool,
-  docxTool, // 使用增强版
+  docxTool,
+  frontendDesignTool,
 ];
 
 // 合并所有执行器
@@ -23,7 +25,8 @@ const completeExecutors: Record<string, ToolExecutor> = {
   ...toolExecutors,
   file_system: fileSystemExecutor,
   code_execution: codeExecutionExecutor,
-  docx_processor: docxExecutor, // 覆盖旧的执行器
+  docx_processor: docxExecutor,
+  frontend_design: frontendDesignExecutor,
 };
 
 // 更新分类
@@ -31,6 +34,7 @@ const completeCategories: Record<string, string[]> = {
   ...toolCategories,
   '文件系统': ['file_system'],
   '代码执行': ['code_execution'],
+  '前端设计': ['frontend_design'],
 };
 
 /**
@@ -40,9 +44,7 @@ export class ToolRegistry {
   private tools: Map<string, { definition: ToolDefinition; execute: ToolExecutor }> = new Map();
   private initialized = false;
 
-  constructor() {
-    // 延迟初始化
-  }
+  constructor() {}
 
   private ensureInitialized(): void {
     if (this.initialized) return;
@@ -174,5 +176,6 @@ export { toolExecutors } from './executors';
 export { fileSystemTool, fileSystemExecutor } from './filesystem';
 export { codeExecutionTool, codeExecutionExecutor } from './sandbox';
 export { docxTool, docxExecutor, colorSchemes, documentTemplates } from './docx-enhanced';
+export { frontendDesignTool, frontendDesignExecutor, designSystems, componentTemplates, pageTemplates } from './frontend-design';
 
 export default ToolRegistry;

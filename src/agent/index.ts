@@ -1,6 +1,6 @@
 /**
- * Agent Entry Point - Complete with All Enhanced Features
- * Agent入口文件 - 包含所有增强功能
+ * Agent Entry Point - Complete with All Features
+ * Agent入口文件 - 包含所有功能
  */
 
 // 核心类型
@@ -17,7 +17,8 @@ export {
   createMobileAdapter,
 } from './core/platform';
 
-// 工具系统
+// ============ 工具系统 ============
+
 export { 
   ToolRegistry, 
   getToolRegistry, 
@@ -38,12 +39,14 @@ export {
   fileExists,
   listDir,
 } from './tools/filesystem';
+
 export { 
   codeExecutionTool, 
   codeExecutionExecutor,
   SandboxManager,
   codeTemplates,
 } from './tools/sandbox';
+
 export { 
   docxTool, 
   docxExecutor,
@@ -54,7 +57,16 @@ export {
   addComment,
 } from './tools/docx-enhanced';
 
-// 记忆系统
+export { 
+  frontendDesignTool, 
+  frontendDesignExecutor,
+  designSystems,
+  componentTemplates,
+  pageTemplates,
+} from './tools/frontend-design';
+
+// ============ 记忆系统 ============
+
 export { MemoryManager } from './memory/manager';
 export { 
   EnhancedContextManager,
@@ -64,7 +76,8 @@ export {
   MessagePriority,
 } from './memory/context';
 
-// 组件系统
+// ============ 组件系统 ============
+
 export * from './components';
 export { ComponentLoader } from './components/loader';
 export { 
@@ -81,8 +94,11 @@ export type {
   ComponentExecutor,
 } from './components/types';
 
-// 工具函数
+// ============ 工具函数 ============
+
 export * from './utils';
+
+// 错误恢复
 export { 
   withRetry, 
   CircuitBreaker, 
@@ -90,6 +106,8 @@ export {
   withTimeout,
   retryPresets,
 } from './utils/recovery';
+
+// 流式处理
 export {
   StreamController,
   StreamProcessor,
@@ -98,20 +116,47 @@ export {
   streamFetch,
 } from './utils/streaming';
 
+// 缓存系统
+export {
+  MemoryCache,
+  CacheKeyGenerator,
+  ToolCacheWrapper,
+  cached,
+  getGlobalCache,
+} from './utils/cache';
+
+// 性能监控
+export {
+  PerformanceMonitor,
+  PerformanceTimer,
+  monitored,
+  getPerformanceMonitor,
+} from './utils/monitoring';
+
+// 工具链编排
+export {
+  ChainExecutor,
+  ChainManager,
+  VariableResolver,
+  ConditionEvaluator,
+  chainTemplates,
+  getChainManager,
+} from './utils/chain';
+
 // ============ 默认配置 ============
 
 export const defaultAgentConfig = {
   name: 'AI Agent',
-  description: '全能智能助手 - 具备信息检索、内容生成、语音处理、视觉理解、文档处理等全方位能力',
+  description: '全能智能助手 - 具备信息检索、内容生成、语音处理、视觉理解、文档处理、代码执行、前端设计等全方位能力',
   model: 'gpt-4o',
   systemPrompt: `你是一个全能的AI智能助手，具备以下核心能力：
 
 ## 🔍 信息检索
-- **网络搜索**: 搜索互联网获取最新信息、新闻、教程等
-- **网页阅读**: 读取并提取网页内容，获取文章正文
+- **网络搜索**: 搜索互联网获取最新信息
+- **网页阅读**: 读取并提取网页内容
 
 ## 🎨 内容生成
-- **图像生成**: 根据文字描述生成各种风格的图像
+- **图像生成**: 根据文字描述生成图像
 - **视频生成**: 创建短视频内容
 - **播客生成**: 将文本转换为播客音频
 
@@ -121,27 +166,30 @@ export const defaultAgentConfig = {
 
 ## 👁️ 视觉理解
 - **图像理解**: 分析图像内容、识别物体、提取文字
-- **视频理解**: 分析视频内容、提取关键帧、生成摘要
+- **视频理解**: 分析视频内容、提取关键帧
 
 ## 📄 文档处理
 - **Word文档**: 创建、读取、编辑Word文档，支持批注和修订追踪
-- **PDF处理**: 读取PDF、提取文本、填写表单
+- **PDF处理**: 读取PDF、提取文本
 - **Excel表格**: 数据分析、图表生成
 - **PPT演示**: 创建和编辑演示文稿
 
 ## 💻 代码执行
 - **JavaScript沙箱**: 安全执行JavaScript代码
 - **Python执行**: 执行Python代码进行数据分析
-- **支持超时控制**: 防止无限循环
 
 ## 📁 文件系统
 - **文件读写**: 读取和写入文件
 - **目录操作**: 列出、创建、删除目录
 - **文件搜索**: 按模式搜索文件
 
+## 🎨 前端设计
+- **组件生成**: 生成按钮、卡片、导航栏等UI组件
+- **页面生成**: 生成落地页、仪表盘、博客页
+- **样式系统**: 生成CSS样式和主题配置
+
 ## 📊 数据分析
 - **金融数据**: 获取股票、基金、汇率等金融信息
-- **代码执行**: 执行Python、JavaScript等代码
 
 ## 🛠️ 实用工具
 - **计算器**: 数学计算和科学计算
@@ -164,8 +212,8 @@ export const defaultAgentConfig = {
     'speech_recognition', 'text_to_speech',
     'image_understanding', 'video_understanding',
     'docx_processor', 'pdf_processor', 'xlsx_processor', 'pptx_processor',
-    'code_execution', 'file_system',
-    'finance_data', 'code_execution',
+    'code_execution', 'file_system', 'frontend_design',
+    'finance_data',
     'calculator', 'get_time', 'json_processor', 'get_weather', 'translate',
   ],
   memory: {
@@ -211,6 +259,11 @@ export const agentCapabilities = {
     icon: '📁',
     tools: ['file_system'],
     description: '文件读写、目录操作、文件搜索',
+  },
+  '前端设计': {
+    icon: '🎨',
+    tools: ['frontend_design'],
+    description: '生成UI组件、页面布局、样式系统',
   },
   '数据分析': {
     icon: '📊',

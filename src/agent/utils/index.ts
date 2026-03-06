@@ -3,21 +3,14 @@
  * 工具函数入口
  */
 
-// 生成唯一ID
+// 基础工具
 export function generateId(): string {
   return `${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 11)}`;
 }
 
-// 延迟函数
 export function sleep(ms: number): Promise<void> {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
-
-// 错误恢复
-export * from './recovery';
-
-// 流式处理
-export * from './streaming';
 
 // 类型检查
 export function isString(value: unknown): value is string {
@@ -113,6 +106,21 @@ export function formatDate(date: Date | number): string {
     minute: '2-digit',
   });
 }
+
+// 错误恢复
+export * from './recovery';
+
+// 流式处理
+export * from './streaming';
+
+// 缓存系统
+export * from './cache';
+
+// 性能监控
+export * from './monitoring';
+
+// 工具链编排
+export * from './chain';
 
 export default {
   generateId,
