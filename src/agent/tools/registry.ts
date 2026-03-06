@@ -6,6 +6,22 @@
 import { ToolDefinition, ToolExecutor } from '../core/types';
 import { allTools, toolCategories } from './definitions';
 import { toolExecutors } from './executors';
+import { fileSystemTool, fileSystemExecutor } from './filesystem';
+
+// 合并所有工具定义
+const completeTools = [...allTools, fileSystemTool];
+
+// 合并所有执行器
+const completeExecutors = {
+  ...toolExecutors,
+  file_system: fileSystemExecutor,
+};
+
+// 更新分类
+const completeCategories = {
+  ...toolCategories,
+  '文件系统': ['file_system'],
+};
 
 /**
  * 工具注册表类
@@ -15,24 +31,18 @@ export class ToolRegistry {
   private initialized = false;
 
   constructor() {
-    // 延迟初始化，不在构造函数中立即注册
+    // 延迟初始化
   }
 
-  /**
-   * 确保已初始化
-   */
   private ensureInitialized(): void {
     if (this.initialized) return;
     this.initialized = true;
     this.registerAllTools();
   }
 
-  /**
-   * 注册所有工具
-   */
   private registerAllTools(): void {
-    for (const definition of allTools) {
-      const executor = toolExecutors[definition.name];
+    for (const definition of completeTools) {
+      const executor = completeExecutors[definition.name];
       if (executor) {
         this.tools.set(definition.name, {
           definition,
@@ -42,32 +52,20 @@ export class ToolRegistry {
     }
   }
 
-  /**
-   * 注册单个工具
-   */
   register(name: string, tool: { definition: ToolDefinition; execute: ToolExecutor }): void {
     this.ensureInitialized();
     this.tools.set(name, tool);
   }
 
-  /**
-   * 注销工具
-   */
   unregister(name: string): void {
     this.tools.delete(name);
   }
 
-  /**
-   * 获取工具定义
-   */
   getDefinition(name: string): ToolDefinition | undefined {
     this.ensureInitialized();
     return this.tools.get(name)?.definition;
   }
 
-  /**
-   * 获取多个工具定义
-   */
   getDefinitions(names?: string[]): ToolDefinition[] {
     this.ensureInitialized();
     
@@ -80,9 +78,6 @@ export class ToolRegistry {
       .filter((def): def is ToolDefinition => def !== undefined);
   }
 
-  /**
-   * 执行工具
-   */
   async execute(
     name: string,
     args: Record<string, unknown>
@@ -111,62 +106,40 @@ export class ToolRegistry {
     }
   }
 
-  /**
-   * 检查工具是否存在
-   */
   has(name: string): boolean {
     this.ensureInitialized();
     return this.tools.has(name);
   }
 
-  /**
-   * 获取所有工具名称
-   */
   getNames(): string[] {
     this.ensureInitialized();
     return Array.from(this.tools.keys());
   }
 
-  /**
-   * 获取工具分类
-   */
   getCategories(): Record<string, string[]> {
-    return toolCategories;
+    return completeCategories;
   }
 
-  /**
-   * 按分类获取工具
-   */
   getToolsByCategory(category: string): ToolDefinition[] {
-    const names = toolCategories[category as keyof typeof toolCategories];
+    const names = completeCategories[category as keyof typeof completeCategories];
     if (!names) return [];
     return this.getDefinitions(names);
   }
 
-  /**
-   * 清空所有工具
-   */
   clear(): void {
     this.tools.clear();
     this.initialized = false;
   }
 
-  /**
-   * 获取工具数量
-   */
   size(): number {
     this.ensureInitialized();
     return this.tools.size;
   }
 }
 
-// ============ 单例管理 ============
-
+// 单例管理
 let _instance: ToolRegistry | null = null;
 
-/**
- * 获取工具注册表单例
- */
 export function getToolRegistry(): ToolRegistry {
   if (!_instance) {
     _instance = new ToolRegistry();
@@ -174,14 +147,10 @@ export function getToolRegistry(): ToolRegistry {
   return _instance;
 }
 
-/**
- * 重置单例（仅用于测试）
- */
 export function resetToolRegistry(): void {
   _instance = null;
 }
 
-// 导出单例（延迟初始化）
 export const toolRegistry = new Proxy({} as ToolRegistry, {
   get(target, prop) {
     const instance = getToolRegistry();
@@ -189,8 +158,8 @@ export const toolRegistry = new Proxy({} as ToolRegistry, {
   }
 });
 
-// 导出所有工具定义
 export { allTools, toolCategories } from './definitions';
 export { toolExecutors } from './executors';
+export { fileSystemTool, fileSystemExecutor } from './filesystem';
 
 export default ToolRegistry;
