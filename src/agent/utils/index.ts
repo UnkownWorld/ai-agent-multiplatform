@@ -16,6 +16,9 @@ export function sleep(ms: number): Promise<void> {
 // 错误恢复
 export * from './recovery';
 
+// 流式处理
+export * from './streaming';
+
 // 类型检查
 export function isString(value: unknown): value is string {
   return typeof value === 'string';
@@ -62,7 +65,7 @@ export function debounce<T extends (...args: unknown[]) => unknown>(
   fn: T,
   delay: number
 ): (...args: Parameters<T>) => void {
-  let timer: NodeJS.Timeout;
+  let timer: ReturnType<typeof setTimeout>;
   return (...args: Parameters<T>) => {
     clearTimeout(timer);
     timer = setTimeout(() => fn(...args), delay);

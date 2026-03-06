@@ -1,6 +1,6 @@
 /**
- * Agent Entry Point - Complete with Component System
- * Agent入口文件 - 包含完整工具集和组件系统
+ * Agent Entry Point - Complete with All Enhanced Features
+ * Agent入口文件 - 包含所有增强功能
  */
 
 // 核心类型
@@ -29,8 +29,40 @@ export {
 export { toolExecutors } from './tools/executors';
 export type { ToolDefinition, ToolExecutor, ToolResult } from './core/types';
 
+// 增强工具
+export { 
+  fileSystemTool, 
+  fileSystemExecutor,
+  readFile,
+  writeFile,
+  fileExists,
+  listDir,
+} from './tools/filesystem';
+export { 
+  codeExecutionTool, 
+  codeExecutionExecutor,
+  SandboxManager,
+  codeTemplates,
+} from './tools/sandbox';
+export { 
+  docxTool, 
+  docxExecutor,
+  colorSchemes,
+  documentTemplates,
+  createWordDocument,
+  readWordDocument,
+  addComment,
+} from './tools/docx-enhanced';
+
 // 记忆系统
 export { MemoryManager } from './memory/manager';
+export { 
+  EnhancedContextManager,
+  PriorityContextManager,
+  TokenEstimator,
+  SummaryGenerator,
+  MessagePriority,
+} from './memory/context';
 
 // 组件系统
 export * from './components';
@@ -51,6 +83,20 @@ export type {
 
 // 工具函数
 export * from './utils';
+export { 
+  withRetry, 
+  CircuitBreaker, 
+  withFallback, 
+  withTimeout,
+  retryPresets,
+} from './utils/recovery';
+export {
+  StreamController,
+  StreamProcessor,
+  StreamRequestBuilder,
+  createStreamRequest,
+  streamFetch,
+} from './utils/streaming';
 
 // ============ 默认配置 ============
 
@@ -78,10 +124,20 @@ export const defaultAgentConfig = {
 - **视频理解**: 分析视频内容、提取关键帧、生成摘要
 
 ## 📄 文档处理
-- **Word文档**: 创建、读取、编辑Word文档
+- **Word文档**: 创建、读取、编辑Word文档，支持批注和修订追踪
 - **PDF处理**: 读取PDF、提取文本、填写表单
 - **Excel表格**: 数据分析、图表生成
 - **PPT演示**: 创建和编辑演示文稿
+
+## 💻 代码执行
+- **JavaScript沙箱**: 安全执行JavaScript代码
+- **Python执行**: 执行Python代码进行数据分析
+- **支持超时控制**: 防止无限循环
+
+## 📁 文件系统
+- **文件读写**: 读取和写入文件
+- **目录操作**: 列出、创建、删除目录
+- **文件搜索**: 按模式搜索文件
 
 ## 📊 数据分析
 - **金融数据**: 获取股票、基金、汇率等金融信息
@@ -108,6 +164,7 @@ export const defaultAgentConfig = {
     'speech_recognition', 'text_to_speech',
     'image_understanding', 'video_understanding',
     'docx_processor', 'pdf_processor', 'xlsx_processor', 'pptx_processor',
+    'code_execution', 'file_system',
     'finance_data', 'code_execution',
     'calculator', 'get_time', 'json_processor', 'get_weather', 'translate',
   ],
@@ -144,6 +201,16 @@ export const agentCapabilities = {
     icon: '📄',
     tools: ['docx_processor', 'pdf_processor', 'xlsx_processor', 'pptx_processor'],
     description: '处理Word、PDF、Excel、PPT文档',
+  },
+  '代码执行': {
+    icon: '💻',
+    tools: ['code_execution'],
+    description: '安全执行JavaScript和Python代码',
+  },
+  '文件系统': {
+    icon: '📁',
+    tools: ['file_system'],
+    description: '文件读写、目录操作、文件搜索',
   },
   '数据分析': {
     icon: '📊',

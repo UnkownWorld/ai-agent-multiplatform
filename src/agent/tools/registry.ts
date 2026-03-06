@@ -1,26 +1,36 @@
 /**
- * Tool Registry - Updated with Complete Tools
- * 工具注册表 - 包含所有完整工具（单例模式）
+ * Tool Registry - Complete with All Enhanced Tools
+ * 工具注册表 - 包含所有增强工具
  */
 
 import { ToolDefinition, ToolExecutor } from '../core/types';
 import { allTools, toolCategories } from './definitions';
 import { toolExecutors } from './executors';
 import { fileSystemTool, fileSystemExecutor } from './filesystem';
+import { codeExecutionTool, codeExecutionExecutor } from './sandbox';
+import { docxTool, docxExecutor } from './docx-enhanced';
 
 // 合并所有工具定义
-const completeTools = [...allTools, fileSystemTool];
+const completeTools: ToolDefinition[] = [
+  ...allTools.filter(t => t.name !== 'docx_processor'), // 移除旧的docx工具
+  fileSystemTool,
+  codeExecutionTool,
+  docxTool, // 使用增强版
+];
 
 // 合并所有执行器
-const completeExecutors = {
+const completeExecutors: Record<string, ToolExecutor> = {
   ...toolExecutors,
   file_system: fileSystemExecutor,
+  code_execution: codeExecutionExecutor,
+  docx_processor: docxExecutor, // 覆盖旧的执行器
 };
 
 // 更新分类
-const completeCategories = {
+const completeCategories: Record<string, string[]> = {
   ...toolCategories,
   '文件系统': ['file_system'],
+  '代码执行': ['code_execution'],
 };
 
 /**
@@ -121,7 +131,7 @@ export class ToolRegistry {
   }
 
   getToolsByCategory(category: string): ToolDefinition[] {
-    const names = completeCategories[category as keyof typeof completeCategories];
+    const names = completeCategories[category];
     if (!names) return [];
     return this.getDefinitions(names);
   }
@@ -158,8 +168,11 @@ export const toolRegistry = new Proxy({} as ToolRegistry, {
   }
 });
 
+// 导出
 export { allTools, toolCategories } from './definitions';
 export { toolExecutors } from './executors';
 export { fileSystemTool, fileSystemExecutor } from './filesystem';
+export { codeExecutionTool, codeExecutionExecutor } from './sandbox';
+export { docxTool, docxExecutor, colorSchemes, documentTemplates } from './docx-enhanced';
 
 export default ToolRegistry;
