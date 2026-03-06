@@ -1,6 +1,6 @@
 /**
- * Agent Entry Point - Updated with Complete Tools
- * Agent入口文件 - 包含完整工具集
+ * Agent Entry Point - Complete with Component System
+ * Agent入口文件 - 包含完整工具集和组件系统
  */
 
 // 核心类型
@@ -25,14 +25,23 @@ export type { ToolDefinition, ToolExecutor, ToolResult } from './core/types';
 // 记忆系统
 export { MemoryManager } from './memory/manager';
 
+// 组件系统
+export * from './components';
+export { ComponentLoader } from './components/loader';
+export { ComponentManager, componentManager } from './components/manager';
+export type { 
+  SkillComponent, 
+  InstalledComponent,
+  ComponentTool,
+  ComponentParameter,
+  ComponentExecutor,
+} from './components/types';
+
 // 工具函数
 export * from './utils';
 
 // ============ 默认配置 ============
 
-/**
- * 完整的Agent默认配置
- */
 export const defaultAgentConfig = {
   name: 'AI Agent',
   description: '全能智能助手 - 具备信息检索、内容生成、语音处理、视觉理解、文档处理等全方位能力',
@@ -73,49 +82,22 @@ export const defaultAgentConfig = {
 - **翻译**: 多语言翻译
 - **JSON处理**: JSON数据解析和处理
 
-## 使用指南
-1. 根据用户需求选择合适的工具
-2. 提供清晰、准确的回复
-3. 必要时主动询问更多细节
-4. 保持友好、专业的态度
+## 🧩 组件扩展
+- 支持用户自定义组件
+- 可通过简单配置添加新能力
+- 支持HTTP API、LLM、工具链等多种执行器
 
 请根据用户的具体需求，灵活运用这些能力来帮助他们解决问题。`,
   temperature: 0.7,
   maxTokens: 4096,
   tools: [
-    // 信息检索
-    'web_search',
-    'web_reader',
-    
-    // 内容生成
-    'image_generation',
-    'video_generation',
-    'podcast_generation',
-    
-    // 语音处理
-    'speech_recognition',
-    'text_to_speech',
-    
-    // 视觉理解
-    'image_understanding',
-    'video_understanding',
-    
-    // 文档处理
-    'docx_processor',
-    'pdf_processor',
-    'xlsx_processor',
-    'pptx_processor',
-    
-    // 数据分析
-    'finance_data',
-    'code_execution',
-    
-    // 实用工具
-    'calculator',
-    'get_time',
-    'json_processor',
-    'get_weather',
-    'translate',
+    'web_search', 'web_reader',
+    'image_generation', 'video_generation', 'podcast_generation',
+    'speech_recognition', 'text_to_speech',
+    'image_understanding', 'video_understanding',
+    'docx_processor', 'pdf_processor', 'xlsx_processor', 'pptx_processor',
+    'finance_data', 'code_execution',
+    'calculator', 'get_time', 'json_processor', 'get_weather', 'translate',
   ],
   memory: {
     enabled: true,
@@ -125,9 +107,6 @@ export const defaultAgentConfig = {
   },
 };
 
-/**
- * 工具能力描述（用于UI展示）
- */
 export const agentCapabilities = {
   '信息检索': {
     icon: '🔍',
@@ -163,6 +142,11 @@ export const agentCapabilities = {
     icon: '🛠️',
     tools: ['calculator', 'get_time', 'json_processor', 'get_weather', 'translate'],
     description: '计算器、时间、天气、翻译等工具',
+  },
+  '组件扩展': {
+    icon: '🧩',
+    tools: [],
+    description: '用户自定义组件和扩展能力',
   },
 };
 

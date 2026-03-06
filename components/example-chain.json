@@ -1,0 +1,73 @@
+{
+  "id": "research-assistant",
+  "name": "研究助手",
+  "version": "1.0.0",
+  "description": "搜索网络并生成研究报告",
+  "author": "用户",
+  "tags": ["automation", "research", "chain"],
+  "icon": "📚",
+  
+  "tool": {
+    "description": "自动搜索网络信息并生成结构化的研究报告",
+    "parameters": [
+      {
+        "name": "topic",
+        "type": "string",
+        "description": "研究主题",
+        "required": true,
+        "label": "研究主题",
+        "placeholder": "请输入要研究的主题"
+      },
+      {
+        "name": "depth",
+        "type": "enum",
+        "description": "研究深度",
+        "enum": ["简要", "标准", "详细"],
+        "default": "标准",
+        "label": "研究深度"
+      }
+    ],
+    "required": ["topic"]
+  },
+  
+  "executor": {
+    "type": "chain",
+    "chain": {
+      "parallel": false,
+      "steps": [
+        {
+          "name": "search",
+          "tool": "web_search",
+          "args": {
+            "query": "{{topic}}",
+            "num": "5"
+          },
+          "onError": "stop"
+        },
+        {
+          "name": "read_first",
+          "tool": "web_reader",
+          "args": {
+            "url": "{{search.results[0].url}}"
+          },
+          "onError": "continue"
+        },
+        {
+          "name": "summarize",
+          "tool": "text_to_speech",
+          "args": {
+            "text": "{{read_first.content}}",
+            "style": "{{depth}}"
+          },
+          "onError": "continue"
+        }
+      ]
+    },
+    "timeout": 60000
+  },
+  
+  "ui": {
+    "visible": true,
+    "layout": "vertical"
+  }
+}

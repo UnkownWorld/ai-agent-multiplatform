@@ -1,0 +1,83 @@
+{
+  "id": "my-weather-skill",
+  "name": "天气查询助手",
+  "version": "1.0.0",
+  "description": "查询指定城市的天气信息",
+  "author": "用户",
+  "tags": ["weather", "api"],
+  "icon": "🌤️",
+  
+  "tool": {
+    "description": "获取城市的当前天气和未来预报",
+    "parameters": [
+      {
+        "name": "city",
+        "type": "string",
+        "description": "城市名称",
+        "required": true,
+        "label": "城市",
+        "placeholder": "请输入城市名称，如：北京"
+      },
+      {
+        "name": "days",
+        "type": "number",
+        "description": "预报天数",
+        "default": 3,
+        "min": 1,
+        "max": 7,
+        "label": "预报天数"
+      },
+      {
+        "name": "unit",
+        "type": "enum",
+        "description": "温度单位",
+        "enum": ["摄氏度", "华氏度"],
+        "default": "摄氏度",
+        "label": "温度单位"
+      }
+    ],
+    "required": ["city"]
+  },
+  
+  "executor": {
+    "type": "http",
+    "http": {
+      "url": "https://api.openweathermap.org/data/2.5/weather",
+      "method": "GET",
+      "query": {
+        "q": "{{city}}",
+        "appid": "$OPENWEATHER_API_KEY",
+        "units": "{{#if unit === '摄氏度'}}metric{{else}}imperial{{/if}}"
+      },
+      "response": {
+        "path": "main",
+        "transform": "({ temp: data.main.temp, humidity: data.main.humidity, description: data.weather[0].description })"
+      }
+    },
+    "timeout": 10000,
+    "retry": {
+      "count": 3,
+      "delay": 1000
+    }
+  },
+  
+  "ui": {
+    "visible": true,
+    "layout": "vertical",
+    "groups": [
+      {
+        "name": "basic",
+        "label": "基本信息",
+        "fields": ["city", "days"],
+        "defaultExpanded": true
+      },
+      {
+        "name": "advanced",
+        "label": "高级选项",
+        "fields": ["unit"],
+        "collapsible": true,
+        "defaultExpanded": false
+      }
+    ]
+  }
+}
