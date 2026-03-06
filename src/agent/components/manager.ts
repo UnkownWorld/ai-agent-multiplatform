@@ -1,29 +1,33 @@
 /**
  * Component Manager API
- * 组件管理API - 提供组件的增删改查接口
+ * 组件管理API - 提供组件的增删改查接口（使用单例）
  */
 
 import { ComponentLoader } from './loader';
 import { SkillComponent, InstalledComponent } from './types';
 import { componentTemplates, getTemplates, getTemplateById, createFromTemplate } from './templates';
-import { ToolRegistry } from '../tools/registry';
+import { getToolRegistry, ToolRegistry } from '../tools/registry';
 
 /**
  * 组件管理器
  */
 export class ComponentManager {
   private loader: ComponentLoader;
-  private toolRegistry: ToolRegistry;
+  private tools: ToolRegistry;
+  private initialized = false;
 
   constructor() {
-    this.toolRegistry = new ToolRegistry();
-    this.loader = new ComponentLoader(this.toolRegistry);
+    // 使用单例 ToolRegistry
+    this.tools = getToolRegistry();
+    this.loader = new ComponentLoader(this.tools);
   }
 
   /**
    * 初始化组件管理器
    */
   async initialize(): Promise<void> {
+    if (this.initialized) return;
+    this.initialized = true;
     await this.loader.loadInstalled();
   }
 
@@ -339,7 +343,33 @@ export class ComponentManager {
   }
 }
 
-// 导出单例
-export const componentManager = new ComponentManager();
+// ============ 单例管理 ============
+
+let _instance: ComponentManager | null = null;
+
+/**
+ * 获取组件管理器单例
+ */
+export function getComponentManager(): ComponentManager {
+  if (!_instance) {
+    _instance = new ComponentManager();
+  }
+  return _instance;
+}
+
+/**
+ * 重置单例（仅用于测试）
+ */
+export function resetComponentManager(): void {
+  _instance = null;
+}
+
+// 导出单例（延迟初始化）
+export const componentManager = new Proxy({} as ComponentManager, {
+  get(target, prop) {
+    const instance = getComponentManager();
+    return instance[prop as keyof ComponentManager];
+  }
+});
 
 export default ComponentManager;

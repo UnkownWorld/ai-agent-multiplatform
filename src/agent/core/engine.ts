@@ -22,7 +22,7 @@ import {
   AgentPlugin,
 } from './types';
 import { MemoryManager } from '../memory/manager';
-import { ToolRegistry } from '../tools/registry';
+import { getToolRegistry, ToolRegistry } from '../tools/registry';
 import { generateId } from '../utils';
 
 export class AgentCore {
@@ -42,7 +42,9 @@ export class AgentCore {
     this.config = config;
     this.platform = platform;
     this.memory = new MemoryManager(config.memory);
-    this.tools = new ToolRegistry();
+    
+    // 使用单例 ToolRegistry，而不是创建新实例
+    this.tools = getToolRegistry();
     
     this.state = {
       status: 'idle',
@@ -125,7 +127,6 @@ export class AgentCore {
 
   async loadAllConversations(): Promise<void> {
     // 从存储中加载所有会话
-    // 实际实现需要遍历存储键
     const keys = await this.getAllConversationKeys();
     const conversations: Conversation[] = [];
     

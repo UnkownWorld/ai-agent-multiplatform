@@ -10,7 +10,7 @@ export * from './types';
 export { ComponentLoader } from './loader';
 
 // 组件管理器
-export { ComponentManager, componentManager } from './manager';
+export { ComponentManager, getComponentManager, resetComponentManager, componentManager } from './manager';
 
 // 预定义模板
 export { 
@@ -26,7 +26,7 @@ export {
  */
 
 import { SkillComponent } from './types';
-import { componentManager } from './manager';
+import { getComponentManager } from './manager';
 
 /**
  * 快速创建HTTP API组件
@@ -51,8 +51,9 @@ export async function createHTTPSkill(options: {
   };
 }): Promise<{ success: boolean; component?: SkillComponent; error?: string }> {
   try {
-    const component = componentManager.createHTTPComponent(options);
-    await componentManager.installFromDefinition(component);
+    const manager = getComponentManager();
+    const component = manager.createHTTPComponent(options);
+    await manager.installFromDefinition(component);
     return { success: true, component };
   } catch (error) {
     return { 
@@ -82,8 +83,9 @@ export async function createLLMSkill(options: {
   temperature?: number;
 }): Promise<{ success: boolean; component?: SkillComponent; error?: string }> {
   try {
-    const component = componentManager.createLLMComponent(options);
-    await componentManager.installFromDefinition(component);
+    const manager = getComponentManager();
+    const component = manager.createLLMComponent(options);
+    await manager.installFromDefinition(component);
     return { success: true, component };
   } catch (error) {
     return { 
@@ -114,8 +116,9 @@ export async function createChainSkill(options: {
   parallel?: boolean;
 }): Promise<{ success: boolean; component?: SkillComponent; error?: string }> {
   try {
-    const component = componentManager.createChainComponent(options);
-    await componentManager.installFromDefinition(component);
+    const manager = getComponentManager();
+    const component = manager.createChainComponent(options);
+    await manager.installFromDefinition(component);
     return { success: true, component };
   } catch (error) {
     return { 
@@ -137,7 +140,8 @@ export async function createFromTemplate(
   }
 ): Promise<{ success: boolean; component?: SkillComponent; error?: string }> {
   try {
-    const installed = await componentManager.installFromTemplate(templateId, config);
+    const manager = getComponentManager();
+    const installed = await manager.installFromTemplate(templateId, config);
     return { success: true, component: installed.component };
   } catch (error) {
     return { 
@@ -154,7 +158,8 @@ export async function createFromJSON(
   json: string
 ): Promise<{ success: boolean; component?: SkillComponent; error?: string }> {
   try {
-    const installed = await componentManager.installFromJSON(json);
+    const manager = getComponentManager();
+    const installed = await manager.installFromJSON(json);
     return { success: true, component: installed.component };
   } catch (error) {
     return { 
@@ -168,21 +173,21 @@ export async function createFromJSON(
  * 获取所有已安装组件
  */
 export function getInstalledComponents() {
-  return componentManager.getInstalled();
+  return getComponentManager().getInstalled();
 }
 
 /**
  * 获取可用模板
  */
 export function getAvailableTemplates(category?: string) {
-  return componentManager.getTemplates(category);
+  return getComponentManager().getTemplates(category);
 }
 
 /**
  * 卸载组件
  */
 export async function uninstallComponent(componentId: string): Promise<boolean> {
-  return await componentManager.uninstall(componentId);
+  return await getComponentManager().uninstall(componentId);
 }
 
 export default {

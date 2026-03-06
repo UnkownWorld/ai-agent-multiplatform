@@ -18,7 +18,14 @@ export {
 } from './core/platform';
 
 // 工具系统
-export { ToolRegistry, toolRegistry, allTools, toolCategories } from './tools/registry';
+export { 
+  ToolRegistry, 
+  getToolRegistry, 
+  resetToolRegistry,
+  toolRegistry, 
+  allTools, 
+  toolCategories 
+} from './tools/registry';
 export { toolExecutors } from './tools/executors';
 export type { ToolDefinition, ToolExecutor, ToolResult } from './core/types';
 
@@ -28,7 +35,12 @@ export { MemoryManager } from './memory/manager';
 // 组件系统
 export * from './components';
 export { ComponentLoader } from './components/loader';
-export { ComponentManager, componentManager } from './components/manager';
+export { 
+  ComponentManager, 
+  getComponentManager,
+  resetComponentManager,
+  componentManager 
+} from './components/manager';
 export type { 
   SkillComponent, 
   InstalledComponent,
