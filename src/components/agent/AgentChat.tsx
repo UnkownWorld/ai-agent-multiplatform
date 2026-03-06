@@ -1,6 +1,6 @@
 /**
- * Agent Chat Interface
- * Agent聊天界面组件
+ * Agent Chat Interface - Updated with Complete Capabilities
+ * Agent聊天界面组件 - 包含完整能力展示
  */
 
 'use client';
@@ -8,6 +8,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useAgent, useMessages, useStreamingMessage } from '@/agent/hooks';
 import { Message } from '@/agent/core/types';
+import { agentCapabilities } from '@/agent';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -22,7 +23,9 @@ import {
   User, 
   Settings,
   Menu,
-  X
+  X,
+  Sparkles,
+  ChevronDown
 } from 'lucide-react';
 
 // 消息气泡组件
@@ -74,6 +77,35 @@ function MessageBubble({ message }: { message: Message }) {
             ))}
           </div>
         )}
+      </div>
+    </div>
+  );
+}
+
+// 能力展示组件
+function CapabilitiesPanel({ onClose }: { onClose: () => void }) {
+  return (
+    <div className="p-4 border-b bg-muted/30">
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-2">
+          <Sparkles className="h-5 w-5 text-primary" />
+          <h3 className="font-semibold">我的能力</h3>
+        </div>
+        <Button variant="ghost" size="icon" onClick={onClose}>
+          <X className="h-4 w-4" />
+        </Button>
+      </div>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        {Object.entries(agentCapabilities).map(([name, cap]) => (
+          <div
+            key={name}
+            className="p-3 rounded-lg bg-background border hover:border-primary/50 transition-colors cursor-pointer"
+          >
+            <div className="text-2xl mb-1">{cap.icon}</div>
+            <div className="font-medium text-sm">{name}</div>
+            <div className="text-xs text-muted-foreground mt-1">{cap.description}</div>
+          </div>
+        ))}
       </div>
     </div>
   );
@@ -137,6 +169,7 @@ function ConversationList({
 export function AgentChat() {
   const [input, setInput] = useState('');
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [showCapabilities, setShowCapabilities] = useState(true);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   
@@ -166,6 +199,7 @@ export function AgentChat() {
     
     const messageContent = input.trim();
     setInput('');
+    setShowCapabilities(false);
     
     await sendMessage(messageContent);
   };
@@ -181,6 +215,7 @@ export function AgentChat() {
   // 创建新会话
   const handleNewConversation = async () => {
     await createConversation();
+    setShowCapabilities(true);
   };
 
   if (isLoading) {
@@ -244,11 +279,23 @@ export function AgentChat() {
                 执行工具
               </Badge>
             )}
+            <Button 
+              variant="ghost" 
+              size="icon"
+              onClick={() => setShowCapabilities(!showCapabilities)}
+            >
+              <Sparkles className="h-5 w-5" />
+            </Button>
             <Button variant="ghost" size="icon">
               <Settings className="h-5 w-5" />
             </Button>
           </div>
         </header>
+
+        {/* 能力展示面板 */}
+        {showCapabilities && messages.length === 0 && (
+          <CapabilitiesPanel onClose={() => setShowCapabilities(false)} />
+        )}
 
         {/* 消息区域 */}
         <ScrollArea className="flex-1 p-4" ref={scrollRef}>
@@ -257,10 +304,15 @@ export function AgentChat() {
               <div className="flex flex-col items-center justify-center h-full py-20">
                 <Bot className="h-16 w-16 text-muted-foreground mb-4" />
                 <h2 className="text-xl font-semibold mb-2">欢迎使用 AI Agent</h2>
-                <p className="text-muted-foreground text-center max-w-md">
-                  我是一个智能助手，可以帮助您完成各种任务。
-                  开始对话吧！
+                <p className="text-muted-foreground text-center max-w-md mb-4">
+                  我是一个全能智能助手，具备信息检索、内容生成、语音处理、视觉理解、文档处理等全方位能力。
                 </p>
+                <div className="flex flex-wrap gap-2 justify-center">
+                  <Badge variant="outline">🔍 网络搜索</Badge>
+                  <Badge variant="outline">🎨 图像生成</Badge>
+                  <Badge variant="outline">📄 文档处理</Badge>
+                  <Badge variant="outline">📊 数据分析</Badge>
+                </div>
               </div>
             ) : (
               <>
@@ -299,7 +351,7 @@ export function AgentChat() {
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={handleKeyDown}
-                placeholder="输入消息... (Shift+Enter换行)"
+                placeholder="输入消息... 我可以帮你搜索信息、生成图像、处理文档等"
                 className="min-h-[44px] max-h-32 resize-none"
                 rows={1}
                 disabled={state.status === 'thinking'}
